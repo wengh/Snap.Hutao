@@ -388,6 +388,10 @@
                     <AppBarSeparator/>
                     <CommandBar.SecondaryCommands>
                         <AppBarButton
+                            Command="{Binding ExportByUIGFCommand}"
+                            Icon="{shuxm:FontIcon Glyph=&#xE74C;}"
+                            Label="{shuxm:ResourceString Name=ViewPageGachaLogExportAsUIGF}"/>
+                        <AppBarButton
                             Command="{Binding ImportExportCommand}"
                             Icon="{shuxm:FontIcon Glyph=&#xE8C9;}"
                             Label="{shuxm:ResourceString Name=ViewPageGachaLogImportExportAction}"/>

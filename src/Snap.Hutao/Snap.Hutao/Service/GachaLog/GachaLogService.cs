@@ -10,7 +10,10 @@ using Snap.Hutao.Service.GachaLog.QueryProvider;
 using Snap.Hutao.ViewModel.GachaLog;
 using Snap.Hutao.Web.Hoyolab.Hk4e.Event.GachaInfo;
 using Snap.Hutao.Web.Response;
+using Snap.Hutao.Model.InterChange.GachaLog;
 using System.Collections.Immutable;
+using System.IO;
+using System.Text.Json;
 
 namespace Snap.Hutao.Service.GachaLog;
 
@@ -181,5 +184,27 @@ internal sealed partial class GachaLogService : IGachaLogService
         }
 
         return new(!fetchContext.Status.AuthKeyTimeout, fetchContext.TargetArchive);
+    }
+
+    public async ValueTask ExportGachaLogAsync(GachaArchive archive, string file, CancellationToken token)
+    {
+        await taskContext.SwitchToBackgroundAsync();
+
+        JsonSerializerOptions options = JsonSerializerOptions.Default;
+        I GachaLogExporter exporter = serviceProvider.GetRequiredService<I GachaLogExporter>();
+
+        UIGF uigf = await exporter.ExportAsync(archive, token).ConfigureAwait(false);
+
+        try
+        {
+            using (FileStream stream = File.Create(file))
+            {
+                await JsonSerializer.SerializeAsync(stream, uigf, options, token).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new HutaoException(SH.ServiceGachaLogExportSaveFileFailed, ex);
+        }
     }
 }

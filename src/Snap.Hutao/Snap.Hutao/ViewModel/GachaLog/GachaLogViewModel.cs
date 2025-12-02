@@ -28,6 +28,7 @@ namespace Snap.Hutao.ViewModel.GachaLog;
 [Service(ServiceLifetime.Scoped)]
 internal sealed partial class GachaLogViewModel : Abstraction.ViewModel
 {
+    private readonly IFileSystemPickerInteraction fileSavePickerInteraction;
     private readonly IContentDialogFactory contentDialogFactory;
     private readonly IServiceProvider serviceProvider;
     private readonly IProgressFactory progressFactory;
@@ -39,8 +40,21 @@ internal sealed partial class GachaLogViewModel : Abstraction.ViewModel
     private bool suppressCurrentItemChangedHandling;
     private GachaLogServiceMetadataContext? metadataContext;
 
-    [GeneratedConstructor]
-    public partial GachaLogViewModel(IServiceProvider serviceProvider);
+    public GachaLogViewModel(IServiceProvider serviceProvider)
+        : base(serviceProvider)
+    {
+        fileSavePickerInteraction = serviceProvider.GetRequiredService<IFileSystemPickerInteraction>();
+        contentDialogFactory = serviceProvider.GetRequiredService<IContentDialogFactory>();
+        progressFactory = serviceProvider.GetRequiredService<IProgressFactory>();
+        gachaLogService = serviceProvider.GetRequiredService<IGachaLogService>();
+        metadataService = serviceProvider.GetRequiredService<IMetadataService>();
+        taskContext = serviceProvider.GetRequiredService<ITaskContext>();
+        messenger = serviceProvider.GetRequiredService<IMessenger>();
+
+        HutaoCloudStatisticsViewModel = serviceProvider.GetRequiredService<HutaoCloudStatisticsViewModel>();
+        WishCountdownViewModel = serviceProvider.GetRequiredService<WishCountdownViewModel>();
+        HutaoCloudViewModel = serviceProvider.GetRequiredService<HutaoCloudViewModel>();
+    }
 
     public partial HutaoCloudStatisticsViewModel HutaoCloudStatisticsViewModel { get; }
 
@@ -313,6 +327,33 @@ internal sealed partial class GachaLogViewModel : Abstraction.ViewModel
 
         INavigationCompletionSource navigationAwaiter = new NavigationExtraData(SettingViewModel.UIGFImportExport);
         serviceProvider.GetRequiredService<INavigationService>().Navigate<SettingPage>(navigationAwaiter, true);
+    }
+
+    [Command("ExportByUIGFCommand")]
+    private async Task ExportByUIGFAsync()
+    {
+        if (Archives?.CurrentItem is not { } archive)
+        {
+            return;
+        }
+
+        (bool isOk, string file) = fileSavePickerInteraction.PickFile(SH.ViewPageGachaLogExportAsUIGF, ".json", [".json"]);
+        if (!isOk)
+        {
+            return;
+        }
+
+        try
+        {
+            using (await EnterCriticalSectionAsync().ConfigureAwait(false))
+            {
+                await gachaLogService.ExportGachaLogAsync(archive, file, CancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            messenger.Send(InfoBarMessage.Warning(SH.ViewModelGachaLogExportOperationCancel));
+        }
     }
 
     private async ValueTask UpdateStatisticsAsync(GachaArchive? archive)

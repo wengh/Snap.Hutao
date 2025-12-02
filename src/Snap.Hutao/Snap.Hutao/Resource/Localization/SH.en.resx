@@ -1973,6 +1973,12 @@ Space Available: {2}</value>
   <data name="ViewModelGachaLogExportFileType" xml:space="preserve">
     <value>UIAF JSON files</value>
   </data>
+  <data name="ViewPageGachaLogExportAsUIGF" xml:space="preserve">
+    <value>Export as UIGF Json</value>
+  </data>
+  <data name="ViewModelGachaLogExportOperationCancel" xml:space="preserve">
+    <value>Wish history export was canceled unexpectedly</value>
+  </data>
   <data name="ViewModelGachaLogPredictedPullLeftToOrange" xml:space="preserve">
     <value>{1:P3} chance to get a 5-star item after {0} wishes</value>
   </data>

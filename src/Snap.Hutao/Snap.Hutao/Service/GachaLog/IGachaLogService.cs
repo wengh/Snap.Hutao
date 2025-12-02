@@ -22,4 +22,6 @@ internal interface IGachaLogService
     ValueTask RemoveArchiveAsync(GachaArchive archive);
 
     ValueTask<IAdvancedDbCollectionView<GachaArchive>> GetArchiveCollectionAsync();
+
+    ValueTask ExportGachaLogAsync(GachaArchive archive, string file, CancellationToken token);
 }
