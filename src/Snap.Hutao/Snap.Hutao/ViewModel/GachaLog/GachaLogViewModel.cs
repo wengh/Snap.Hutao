@@ -81,12 +81,7 @@ internal sealed partial class GachaLogViewModel : Abstraction.ViewModel
     {
         try
         {
-            if (!await metadataService.InitializeAsync().ConfigureAwait(false))
-            {
-                return false;
-            }
-
-            metadataContext = await metadataService.GetContextAsync<GachaLogServiceMetadataContext>(token).ConfigureAwait(false);
+            // Load archives first so users can still export even without metadata
             using (await EnterCriticalSectionAsync().ConfigureAwait(false))
             {
                 IAdvancedDbCollectionView<GachaArchive> archives = await gachaLogService.GetArchiveCollectionAsync().ConfigureAwait(false);
@@ -96,11 +91,17 @@ internal sealed partial class GachaLogViewModel : Abstraction.ViewModel
                 Archives.MoveCurrentTo(Archives.Source.SelectedOrFirstOrDefault());
             }
 
-            // When `Archives.CurrentItem` is not null, the `Initialization` actually completed in
-            // `UpdateStatisticsAsync`, so we return false to make the view hide until the actual
-            // initialization is complete. But we return true when no archives are available,
-            // so that the empty view can show up.
-            if (Archives.CurrentItem is null)
+            // Try to load metadata for statistics display
+            if (await metadataService.InitializeAsync().ConfigureAwait(false))
+            {
+                metadataContext = await metadataService.GetContextAsync<GachaLogServiceMetadataContext>(token).ConfigureAwait(false);
+            }
+
+            // When `Archives.CurrentItem` is not null and metadata is available, the `Initialization`
+            // actually completed in `UpdateStatisticsAsync`, so we return false to make the view hide
+            // until the actual initialization is complete. But we return true when no archives are
+            // available or metadata failed, so that the view can show up for export functionality.
+            if (Archives.CurrentItem is null || metadataContext is null)
             {
                 return true;
             }
@@ -377,9 +378,17 @@ internal sealed partial class GachaLogViewModel : Abstraction.ViewModel
             return;
         }
 
+        // If metadata is not available, we can't show statistics but still allow export
+        if (metadataContext is null)
+        {
+            await taskContext.SwitchToMainThreadAsync();
+            Statistics = default;
+            IsInitialized = true;
+            return;
+        }
+
         try
         {
-            ArgumentNullException.ThrowIfNull(metadataContext);
             GachaStatistics statistics = await gachaLogService.GetStatisticsAsync(metadataContext, archive).ConfigureAwait(false);
 
             await taskContext.SwitchToMainThreadAsync();
