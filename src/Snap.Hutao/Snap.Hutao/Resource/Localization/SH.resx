@@ -2633,6 +2633,9 @@
   <data name="ViewPageGachaLogImportExportAction" xml:space="preserve">
     <value>导入/导出记录</value>
   </data>
+  <data name="ViewPageGachaLogExportUIGFAction" xml:space="preserve">
+    <value>导出 UIGF</value>
+  </data>
   <data name="ViewPageGachaLogImportHeader" xml:space="preserve">
     <value>导入 UIGF Json</value>
   </data>

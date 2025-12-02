@@ -382,6 +382,10 @@
                     </AppBarButton>
                     <AppBarSeparator/>
                     <AppBarButton
+                        Command="{Binding ExportUIGFCommand}"
+                        Icon="{shuxm:FontIcon Glyph=&#xEDE1;}"
+                        Label="{shuxm:ResourceString Name=ViewPageGachaLogExportUIGFAction}"/>
+                    <AppBarButton
                         Flyout="{StaticResource HutaoCloudFlyout}"
                         Icon="{shuxm:FontIcon Glyph=&#xE753;}"
                         Label="{shuxm:ResourceString Name=ViewPageGachaLogHutaoCloud}"/>

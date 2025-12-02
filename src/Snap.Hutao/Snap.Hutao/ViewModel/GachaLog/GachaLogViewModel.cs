@@ -7,6 +7,7 @@ using Snap.Hutao.Core.Database;
 using Snap.Hutao.Core.ExceptionService;
 using Snap.Hutao.Core.Logging;
 using Snap.Hutao.Factory.ContentDialog;
+using Snap.Hutao.Factory.Picker;
 using Snap.Hutao.Factory.Progress;
 using Snap.Hutao.Model.Entity;
 using Snap.Hutao.Service.GachaLog;
@@ -15,11 +16,13 @@ using Snap.Hutao.Service.Metadata;
 using Snap.Hutao.Service.Metadata.ContextAbstraction;
 using Snap.Hutao.Service.Navigation;
 using Snap.Hutao.Service.Notification;
+using Snap.Hutao.Service.UIGF;
 using Snap.Hutao.UI.Xaml.Data;
 using Snap.Hutao.UI.Xaml.View.Dialog;
 using Snap.Hutao.UI.Xaml.View.Page;
 using Snap.Hutao.ViewModel.Setting;
 using Snap.Hutao.Win32.Foundation;
+using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 
 namespace Snap.Hutao.ViewModel.GachaLog;
@@ -313,6 +316,52 @@ internal sealed partial class GachaLogViewModel : Abstraction.ViewModel
 
         INavigationCompletionSource navigationAwaiter = new NavigationExtraData(SettingViewModel.UIGFImportExport);
         serviceProvider.GetRequiredService<INavigationService>().Navigate<SettingPage>(navigationAwaiter, true);
+    }
+
+    [Command("ExportUIGFCommand")]
+    private async Task ExportUIGFAsync()
+    {
+        SentrySdk.AddBreadcrumb(BreadcrumbFactory.CreateUI("Export UIGF file directly", "GachaLogViewModel.Command"));
+
+        if (Archives?.CurrentItem is null)
+        {
+            return;
+        }
+
+        IFileSystemPickerInteraction fileSystemPickerInteraction = serviceProvider.GetRequiredService<IFileSystemPickerInteraction>();
+
+        FileSystemPickerOptions pickerOptions = new()
+        {
+            Title = SH.ViewModelGachaLogUIGFExportPickerTitle,
+            DefaultFileName = $"Snap Hutao UIGF {Archives.CurrentItem.Uid}.json",
+            FilterName = SH.ViewModelGachaLogExportFileType,
+            FilterType = "*.json",
+        };
+
+        if (fileSystemPickerInteraction.SaveFile(pickerOptions) is not (true, { HasValue: true } file))
+        {
+            return;
+        }
+
+        uint uid = uint.Parse(Archives.CurrentItem.Uid);
+        ImmutableArray<uint> uids = [uid];
+
+        UIGFExportOptions options = new()
+        {
+            FilePath = file,
+            GachaArchiveUids = uids,
+        };
+
+        try
+        {
+            IUIGFService uigfService = serviceProvider.GetRequiredService<IUIGFService>();
+            await uigfService.ExportAsync(options).ConfigureAwait(false);
+            messenger.Send(InfoBarMessage.Success(SH.ViewModelUIGFExportSuccess));
+        }
+        catch (Exception ex)
+        {
+            messenger.Send(InfoBarMessage.Error(SH.ViewModelUIGFExportError, ex));
+        }
     }
 
     private async ValueTask UpdateStatisticsAsync(GachaArchive? archive)
