@@ -328,6 +328,12 @@ internal sealed partial class GachaLogViewModel : Abstraction.ViewModel
             return;
         }
 
+        if (!uint.TryParse(Archives.CurrentItem.Uid, out uint uid))
+        {
+            messenger.Send(InfoBarMessage.Warning(SH.ViewModelUIGFExportError));
+            return;
+        }
+
         IFileSystemPickerInteraction fileSystemPickerInteraction = serviceProvider.GetRequiredService<IFileSystemPickerInteraction>();
 
         FileSystemPickerOptions pickerOptions = new()
@@ -343,7 +349,6 @@ internal sealed partial class GachaLogViewModel : Abstraction.ViewModel
             return;
         }
 
-        uint uid = uint.Parse(Archives.CurrentItem.Uid);
         ImmutableArray<uint> uids = [uid];
 
         UIGFExportOptions options = new()
