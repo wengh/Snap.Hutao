@@ -156,7 +156,10 @@ internal static class Program
 
         Console.WriteLine($"Found {archives.Count} archive(s)");
 
-        // Load all items once (more efficient for in-memory filtering)
+        // Load all items once and filter in memory.
+        // Note: This approach is used because SQLite GUID comparison doesn't work reliably
+        // with EF Core LINQ translation. For typical user databases (thousands of records),
+        // this is acceptable. If memory becomes an issue, consider batching by archive.
         List<GachaItem> allItems = await dbContext.GachaItems.ToListAsync();
         Console.WriteLine($"Total gacha records: {allItems.Count}");
 
@@ -180,6 +183,7 @@ internal static class Program
                     UIGFGachaType = item.QueryType,
                     GachaType = item.GachaType,
                     ItemId = item.ItemId,
+                    // Convert to UTC DateTime as per UIGF spec (timezone stored separately)
                     Time = item.Time.UtcDateTime,
                     Id = item.Id,
                 })
