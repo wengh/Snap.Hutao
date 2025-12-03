@@ -18,6 +18,9 @@ src/Snap.Hutao/Snap.Hutao.Benchmark/obj/
 src/Snap.Hutao/Snap.Hutao.Test/bin/
 src/Snap.Hutao/Snap.Hutao.Test/obj/
 
+src/Snap.Hutao/Snap.Hutao.GachaExport/bin/
+src/Snap.Hutao/Snap.Hutao.GachaExport/obj/
+
 src/Snap.Hutao/Snap.Hutao/Properties/PublishProfiles/FolderProfile.pubxml.user
 
 src/Snap.Hutao/Snap.Hutao/Generated Files/
